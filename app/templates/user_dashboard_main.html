@@ -1,0 +1,183 @@
+{% extends "base.html" %} {% block title %}User Dashboard{% endblock %} {% block
+content %}
+<div class="container-fluid min-vh-100">
+  <div class="row">
+    <div class="col-md-3 col-lg-2 p-0 bg-dark">
+      <div class="list-group list-group-flush py-4">
+        <a
+          href="/user/dashboard?tab=my_bookings"
+          class="list-group-item bg-dark text-white list-group-item-action {% if tab == 'my_bookings' %}active{% endif %}"
+        >
+          <i class="bi bi-calendar-check"></i> My Bookings
+        </a>
+        <a
+          href="/user/dashboard?tab=history"
+          class="list-group-item bg-dark text-white list-group-item-action {% if tab == 'history' %}active{% endif %}"
+        >
+          <i class="bi bi-clock-history"></i> History
+        </a>
+        <a
+          href="/user/dashboard?tab=graph"
+          class="list-group-item bg-dark text-white list-group-item-action {% if tab == 'graph' %}active{% endif %}"
+        >
+          <i class="bi bi-bar-chart"></i> Graph
+        </a>
+      </div>
+    </div>
+    <div class="col-md-9 col-lg-10 py-4">
+      {% block dashboard_content %} {% if tab == 'my_bookings' %}
+      <h3 class="mb-4">My Active Bookings</h3>
+      {% if bookings and bookings|length > 0 %}
+      <div class="table-responsive">
+        <table class="table table-dark table-striped align-middle">
+          <thead>
+            <tr>
+              <th>Lot Name</th>
+              <th>Address</th>
+              <th>Pin</th>
+              <th>Parking Time</th>
+              <th>Leaving Time</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in bookings %}
+            <tr>
+              <td>{{ b[1] }}</td>
+              <td>{{ b[2] }}</td>
+              <td>{{ b[3] }}</td>
+              <td>{{ b[4] }}</td>
+              <td>{{ b[5] }}</td>
+              <td>
+                <form
+                  action="/release/{{ b[0] }}"
+                  method="POST"
+                  style="display: inline"
+                >
+                  <button type="submit" class="btn btn-danger btn-sm">
+                    Release
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info">You have no active bookings.</div>
+      {% endif %} {% elif tab == 'history' %}
+      <div class="row mb-4">
+        <div class="col-md-4 mb-2">
+          <div class="card bg-dark text-white shadow-sm p-1">
+            <div class="card-body">
+              <div class="fs-5 fw-semibold pb-1">Total Spent</div>
+              <div class="fs-3 pb-3">₹{{ total_spent }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-8 mb-2">
+          <div class="card bg-dark text-white shadow-sm">
+            <div class="card-body">
+              <div class="fs-6 fw-semibold mb-2">Monthly Expenses</div>
+              <div class="d-flex flex-wrap gap-3">
+                {% for m in monthly_expenses %}
+                <div
+                  class="bg-secondary bg-opacity-25 rounded px-3 py-2 text-center"
+                >
+                  <div class="fw-semibold">{{ m[0] }}</div>
+                  <div>₹{{ m[1]|round(2) }}</div>
+                </div>
+                {% else %}
+                <div class="text-muted">No monthly data</div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h3 class="mb-4">Booking History</h3>
+      {% if history_bookings and history_bookings|length > 0 %}
+      <div class="table-responsive">
+        <table class="table table-dark table-striped align-middle">
+          <thead>
+            <tr>
+              <th>Lot Name</th>
+              <th>Address</th>
+              <th>Pin</th>
+              <th>Parking Time</th>
+              <th>Leaving Time</th>
+              <th>Status</th>
+              <th>Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in history_bookings %}
+            <tr>
+              <td>{{ h[1] }}</td>
+              <td>{{ h[2] }}</td>
+              <td>{{ h[3] }}</td>
+              <td>{{ h[4] }}</td>
+              <td>{{ h[5] }}</td>
+              <td>
+                {% if h[7] == 'Active' %}
+                <span class="badge bg-success">Active</span>
+                {% else %}
+                <span class="badge bg-secondary">Released</span>
+                {% endif %}
+              </td>
+              <td>₹{{ h[6] }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info">No booking history found.</div>
+      {% endif %} {% elif tab == 'graph' %}
+
+      <h3 class="mb-4">Booking Graph</h3>
+      <div class="card bg-dark text-white mb-4">
+        <div class="card-body">
+          <canvas id="bookingGraph" height="120"></canvas>
+        </div>
+      </div>
+      {% if not graph_data or graph_data|length == 0 %}
+      <div class="alert alert-info">No booking data to display.</div>
+      {% endif %}
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+      <script>
+        const graphData = {{ graph_data|tojson }};
+        const months = graphData.map(row => row[0]);
+        const counts = graphData.map(row => row[1]);
+        const ctx = document.getElementById('bookingGraph').getContext('2d');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: months,
+            datasets: [{
+              label: 'Bookings per Month',
+              data: counts,
+              backgroundColor: 'rgba(54, 162, 235, 0.7)',
+              borderColor: 'rgba(54, 162, 235, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              title: { display: false }
+            },
+            scales: {
+              x: { title: { display: true, text: 'Month' } },
+              y: { beginAtZero: true, title: { display: true, text: 'Bookings' } }
+            }
+          }
+        });
+      </script>
+      {% endif %} {% endblock %}
+    </div>
+  </div>
+</div>
+{% endblock %}

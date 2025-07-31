@@ -1,0 +1,455 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Analytics{% endblock %}
+
+{% block content %}
+
+<style>
+  .stats-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 20px;
+    color: white;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  }
+  
+  .stats-card h3 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .stats-card p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+  }
+  
+  .chart-container {
+    background: #1e1e1e;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  }
+  
+  .chart-title {
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .lot-status-card {
+    background: #2a2a2a;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-left: 4px solid #ff9800;
+  }
+  
+  .lot-status-card h5 {
+    color: #fff;
+    margin-bottom: 10px;
+  }
+  
+  .progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #444;
+  }
+  
+  .progress-bar {
+    background: linear-gradient(90deg, #ff9800, #ff5722);
+  }
+  
+  .status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+  }
+  
+  .status-active {
+    background-color: #4caf50;
+    color: white;
+  }
+  
+  .status-frozen {
+    background-color: #ff9800;
+    color: white;
+  }
+  
+  .revenue-card {
+    background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  }
+  
+  .bookings-card {
+    background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  }
+  
+  .users-card {
+    background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+  }
+  
+  .lots-card {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  }
+</style>
+
+<div class="container mt-4 bg-transparent">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="text-white">Analytics Dashboard</h2>
+    <div>
+
+      <a href="/admin/dashboard" class="btn btn-outline-light">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="stats-card revenue-card">
+        <h3>₹{{ "%.2f"|format(total_revenue) }}</h3>
+        <p>Total Revenue</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stats-card bookings-card">
+        <h3>{{ total_bookings }}</h3>
+        <p>Total Bookings</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stats-card users-card">
+        <h3>{{ active_users }}</h3>
+        <p>Active Users (30 days)</p>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="stats-card lots-card">
+        <h3>{{ total_spots }}</h3>
+        <p>Total Spots</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 1 -->
+  <div class="row">
+    <div class="col-md-6">
+      <div class="chart-container">
+        <h4 class="chart-title">Monthly Revenue</h4>
+        <canvas id="revenueChart" width="400" height="200"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="chart-container">
+        <h4 class="chart-title">Peak Hours</h4>
+        <canvas id="peakHoursChart" width="400" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2 -->
+  <div class="row">
+    <div class="col-md-6">
+      <div class="chart-container">
+        <h4 class="chart-title">Booking Trends (Last 30 Days)</h4>
+        <canvas id="bookingTrendsChart" width="400" height="200"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="chart-container">
+        <h4 class="chart-title">Revenue by Location</h4>
+        <canvas id="revenueByLocationChart" width="400" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Parking lot details at last -->
+  <div class="chart-container">
+    <h4 class="chart-title">Parking Lot Details</h4>
+    <div class="row">
+      {% for lot in lot_stats %}
+      <div class="col-md-6">
+        <div class="lot-status-card">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h5>{{ lot[1] }}</h5>
+              <p class="text-white mb-2 ">Price: ₹{{ lot[6] }}/hr | Spots: {{ lot[3] }}/{{ lot[2] }}</p>
+            </div>
+            <span class="status-badge {% if lot[7] == 'active' %}status-active{% else %}status-frozen{% endif %}">
+              {{ lot[7]|title }}
+            </span>
+          </div>
+          <div class="mb-2">
+            <small class="text-white">Occupancy: {{ lot[5] }} occupied, {{ lot[4] }} available</small>
+          </div>
+          {% set occupancy_rate = (lot[5] / lot[3] * 100) if lot[3] > 0 else 0 %}
+          <div class="progress">
+            <div class="progress-bar" role="progressbar" style="width: {{ occupancy_rate }}%"></div>
+          </div>
+          <small class="text-white">{{ "%.1f"|format(occupancy_rate) }}% occupied</small>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const monthlyRevenue = {{ monthly_revenue | tojson }};
+  const bookingTrends = {{ booking_trends | tojson }};
+  const revenueByLocation = {{ revenue_by_location | tojson }};
+  const peakHours = {{ peak_hours | tojson }};
+// Monthly Revenue Chart
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+const revenueChart = new Chart(revenueCtx, {
+  type: 'line',
+  data: {
+    labels: [{% for month, revenue in monthly_revenue %}'{{ month }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+    datasets: [{
+      label: 'Revenue (₹)',
+      data: [{% for month, revenue in monthly_revenue %}{{ revenue }}{% if not loop.last %}, {% endif %}{% endfor %}],
+      borderColor: '#4caf50',
+      backgroundColor: 'rgba(76, 175, 80, 0.1)',
+      tension: 0.4,
+      fill: true
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        labels: {
+          color: '#fff'
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          color: '#fff'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+      },
+      x: {
+        ticks: {
+          color: '#fff'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+      }
+    }
+  }
+});
+
+
+// Booking Trends Chart
+const bookingCtx = document.getElementById('bookingTrendsChart').getContext('2d');
+const bookingChart = new Chart(bookingCtx, {
+  type: 'line',
+  data: {
+    labels: [{% for date, bookings in booking_trends %}'{{ date }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+    datasets: [{
+      label: 'Bookings',
+      data: [{% for date, bookings in booking_trends %}{{ bookings }}{% if not loop.last %}, {% endif %}{% endfor %}],
+      borderColor: '#2196f3',
+      backgroundColor: 'rgba(33, 150, 243, 0.1)',
+      tension: 0.4,
+      fill: true
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        labels: {
+          color: '#fff'
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          color: '#fff'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+      },
+      x: {
+        ticks: {
+          color: '#fff'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+      }
+    }
+  }
+});
+
+// Revenue by Location Chart
+const revenueLocationCtx = document.getElementById('revenueByLocationChart').getContext('2d');
+const revenueLocationChart = new Chart(revenueLocationCtx, {
+  type: 'bar',
+  data: {
+    labels: [{% for location, revenue in revenue_by_location %}'{{ location }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+    datasets: [{
+      label: 'Revenue (₹)',
+      data: [{% for location, revenue in revenue_by_location %}{{ revenue }}{% if not loop.last %}, {% endif %}{% endfor %}],
+      backgroundColor: [
+        '#ff9800',
+        '#2196f3',
+        '#4caf50',
+        '#9c27b0',
+        '#f44336',
+        '#00bcd4'
+      ]
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        labels: {
+          color: '#fff'
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          color: '#fff'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+      },
+      x: {
+        ticks: {
+          color: '#fff'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+      }
+    }
+  }
+});
+
+// Peak Hours Chart
+const peakHoursCtx = document.getElementById('peakHoursChart').getContext('2d');
+const peakHoursChart = new Chart(peakHoursCtx, {
+  type: 'bar',
+  data: {
+    labels: [{% for hour, bookings in peak_hours %}'{{ hour }}:00'{% if not loop.last %}, {% endif %}{% endfor %}],
+    datasets: [{
+      label: 'Bookings',
+      data: [{% for hour, bookings in peak_hours %}{{ bookings }}{% if not loop.last %}, {% endif %}{% endfor %}],
+      backgroundColor: '#9c27b0',
+      borderColor: '#7b1fa2',
+      borderWidth: 1
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        labels: {
+          color: '#fff'
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          color: '#fff'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+      },
+      x: {
+        ticks: {
+          color: '#fff'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+      }
+    }
+  }
+});
+
+/*
+let refreshInterval;
+
+function startAutoRefresh() {
+  refreshInterval = setInterval(refreshData, 30000); 
+}
+
+function stopAutoRefresh() {
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+  }
+}
+
+/*
+function refreshData() {
+  fetch('/admin/analytics/api/data')
+    .then(response => response.json())
+    .then(data => {
+      // Update key statistics
+      document.querySelector('.revenue-card h3').textContent = `₹${data.total_revenue.toFixed(2)}`;
+      document.querySelector('.bookings-card h3').textContent = data.total_bookings;
+      
+      // Update occupancy chart data
+      const occupancyChart = Chart.getChart('occupancyChart');
+      if (occupancyChart) {
+        occupancyChart.data.labels = data.lot_stats.map(lot => lot.location);
+        occupancyChart.data.datasets[0].data = data.lot_stats.map(lot => lot.occupancy_rate);
+        occupancyChart.update();
+      }
+      
+      console.log('Data refreshed successfully');
+    })
+    .catch(error => {
+      console.error('Error refreshing data:', error);
+    });
+}
+*/
+
+
+/*document.getElementById('refreshBtn').addEventListener('click', refreshData);*/
+
+/*
+document.addEventListener('DOMContentLoaded', function() {
+  startAutoRefresh();
+});
+
+// Stop auto-refresh when page is hidden
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    stopAutoRefresh();
+  } else {
+    startAutoRefresh();
+  }
+});
+*/
+</script>
+
+{% endblock %} 

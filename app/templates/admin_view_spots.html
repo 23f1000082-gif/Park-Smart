@@ -1,0 +1,35 @@
+{% extends 'base.html' %} {% block title %}Parking Spots - {{ lot[1] }}{%
+endblock %} {% block content %}
+<div class="container">
+  <h3 class="mb-3">Parking Spots for <strong>{{ lot[1] }}</strong></h3>
+  <p><strong>Address:</strong> {{ lot[3] }}, Pin: {{ lot[4] }}</p>
+  <p><strong>Price/hr:</strong> ₹{{ lot[2] }}</p>
+
+  <a href="/admin/dashboard" class="btn btn-sm btn-secondary mb-3"
+    >&larr; Back to Dashboard</a
+  >
+
+  <table class="table table-bordered table-hover shadow-sm">
+    <thead class="table-dark">
+      <tr>
+        <th>Spot ID</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for spot in spots %}
+      <tr>
+        <td>{{ spot[0] }}</td>
+        <td>
+          {% if spot[1] == 'A' %}
+          <span class="badge bg-success">Available</span>
+          {% else %}
+          <span class="badge bg-danger">Occupied</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

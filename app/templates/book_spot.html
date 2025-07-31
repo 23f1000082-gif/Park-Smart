@@ -1,0 +1,29 @@
+{% extends "base.html" %} {% block title %}Book Spot{% endblock %} {% block
+content %}
+<div class="container mt-4">
+  <h2>Book Spot at {{ lot.prime_location_name }}</h2>
+  <p>₹{{ lot.price }} per spot</p>
+
+  <form method="POST">
+    <div class="mb-3">
+      <label class="form-label">Parking Time</label>
+      <input
+        type="datetime-local"
+        name="parking_timestamp"
+        class="form-control"
+        required
+      />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Leaving Time</label>
+      <input
+        type="datetime-local"
+        name="leaving_timestamp"
+        class="form-control"
+        required
+      />
+    </div>
+    <button type="submit" class="btn btn-success">Confirm Booking</button>
+  </form>
+</div>
+{% endblock %}

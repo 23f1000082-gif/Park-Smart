@@ -1,0 +1,497 @@
+openapi: 3.0.0
+info:
+  title: Vehicle Parking Management System API
+  description: RESTful API for managing vehicle parking operations, user authentication, and administrative functions
+  version: 1.0.0
+  contact:
+    name: Development Team
+    email: support@parkingsystem.com
+
+servers:
+  - url: http://localhost:5000
+    description: Development server
+  - url: https://api.parkingsystem.com
+    description: Production server
+
+paths:
+  /register:
+    post:
+      summary: Register a new user
+      description: Create a new user account with username and password
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  description: Unique username for the account
+                  example: "john_doe"
+                password:
+                  type: string
+                  description: User password (will be hashed)
+                  example: "securepassword123"
+      responses:
+        '200':
+          description: Registration successful
+          content:
+            text/html:
+              schema:
+                type: string
+        '400':
+          description: Username already exists or invalid input
+
+  /login:
+    post:
+      summary: User login
+      description: Authenticate user and create session
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  description: Username
+                  example: "john_doe"
+                password:
+                  type: string
+                  description: User password
+                  example: "securepassword123"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            text/html:
+              schema:
+                type: string
+        '401':
+          description: Invalid credentials
+
+  /logout:
+    get:
+      summary: User logout
+      description: Terminate user session
+      tags:
+        - Authentication
+      responses:
+        '200':
+          description: Logout successful
+
+  /user/dashboard:
+    get:
+      summary: User dashboard
+      description: Display user's booking dashboard with multiple tabs
+      tags:
+        - User Operations
+      parameters:
+        - name: tab
+          in: query
+          description: Dashboard tab to display
+          schema:
+            type: string
+            enum: [my_bookings, history, graph]
+            default: my_bookings
+      responses:
+        '200':
+          description: Dashboard page
+          content:
+            text/html:
+              schema:
+                type: string
+        '401':
+          description: User not authenticated
+
+  /user/search:
+    get:
+      summary: Search parking lots
+      description: Display parking lot search interface
+      tags:
+        - User Operations
+      responses:
+        '200':
+          description: Search page
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      summary: Search for parking lots
+      description: Search parking lots by location and pin code
+      tags:
+        - User Operations
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                location:
+                  type: string
+                  description: Location name
+                  example: "Downtown Mall"
+                pin_code:
+                  type: string
+                  description: Postal code
+                  example: "12345"
+      responses:
+        '200':
+          description: Search results
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /book:
+    post:
+      summary: Book parking spot
+      description: Reserve a parking spot in a parking lot
+      tags:
+        - User Operations
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - lot_id
+                - booking_type
+              properties:
+                lot_id:
+                  type: integer
+                  description: Parking lot ID
+                  example: 1
+                booking_type:
+                  type: string
+                  enum: [now, scheduled]
+                  description: Type of booking
+                  example: "now"
+                duration:
+                  type: integer
+                  description: Duration in hours (for immediate booking)
+                  example: 2
+                parking_time:
+                  type: string
+                  format: datetime
+                  description: Start time (for scheduled booking)
+                  example: "2024-01-15T10:00"
+                leaving_time:
+                  type: string
+                  format: datetime
+                  description: End time (for scheduled booking)
+                  example: "2024-01-15T14:00"
+      responses:
+        '200':
+          description: Booking successful
+        '400':
+          description: No available spots or invalid input
+
+  /release/{reservation_id}:
+    post:
+      summary: Release parking spot
+      description: Release a booked parking spot and calculate final cost
+      tags:
+        - User Operations
+      parameters:
+        - name: reservation_id
+          in: path
+          required: true
+          description: Reservation ID to release
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Spot released successfully
+        '404':
+          description: Reservation not found
+
+  /get_locations/{pin_code}:
+    get:
+      summary: Get locations by pin code
+      description: Retrieve available locations for a given postal code
+      tags:
+        - User Operations
+      parameters:
+        - name: pin_code
+          in: path
+          required: true
+          description: Postal code
+          schema:
+            type: string
+            example: "12345"
+      responses:
+        '200':
+          description: List of locations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  locations:
+                    type: array
+                    items:
+                      type: string
+                    example: ["Downtown Mall", "Central Park"]
+
+  /admin/dashboard:
+    get:
+      summary: Admin dashboard
+      description: Display admin dashboard for parking lot management
+      tags:
+        - Admin Operations
+      responses:
+        '200':
+          description: Admin dashboard page
+          content:
+            text/html:
+              schema:
+                type: string
+        '403':
+          description: Access denied - admin only
+    post:
+      summary: Create parking lot
+      description: Create a new parking lot with specified details
+      tags:
+        - Admin Operations
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - location
+                - price
+                - address
+                - pin
+                - max_spots
+              properties:
+                location:
+                  type: string
+                  description: Location name
+                  example: "New Parking Lot"
+                price:
+                  type: number
+                  description: Price per hour
+                  example: 10.50
+                address:
+                  type: string
+                  description: Physical address
+                  example: "123 Main Street"
+                pin:
+                  type: string
+                  description: Postal code
+                  example: "12345"
+                max_spots:
+                  type: integer
+                  description: Maximum number of spots
+                  example: 50
+      responses:
+        '200':
+          description: Parking lot created successfully
+        '403':
+          description: Access denied - admin only
+
+  /admin/users:
+    get:
+      summary: User management
+      description: Display user management and analytics page
+      tags:
+        - Admin Operations
+      responses:
+        '200':
+          description: User management page
+          content:
+            text/html:
+              schema:
+                type: string
+        '403':
+          description: Access denied - admin only
+
+  /admin/analytics:
+    get:
+      summary: Analytics dashboard
+      description: Display comprehensive analytics dashboard with charts
+      tags:
+        - Admin Operations
+      responses:
+        '200':
+          description: Analytics dashboard page
+          content:
+            text/html:
+              schema:
+                type: string
+        '403':
+          description: Access denied - admin only
+
+  /admin/analytics/api/data:
+    get:
+      summary: Real-time analytics data
+      description: Get real-time analytics data in JSON format
+      tags:
+        - Admin Operations
+      responses:
+        '200':
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lot_stats:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        location:
+                          type: string
+                        total_spots:
+                          type: integer
+                        available_spots:
+                          type: integer
+                        occupied_spots:
+                          type: integer
+                        occupancy_rate:
+                          type: number
+                  total_revenue:
+                    type: number
+                  total_bookings:
+                    type: integer
+        '403':
+          description: Access denied - admin only
+
+  /admin/lot/{lot_id}/spots:
+    get:
+      summary: View parking spots
+      description: Display all spots for a specific parking lot
+      tags:
+        - Admin Operations
+      parameters:
+        - name: lot_id
+          in: path
+          required: true
+          description: Parking lot ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Spots view page
+          content:
+            text/html:
+              schema:
+                type: string
+        '403':
+          description: Access denied - admin only
+
+  /admin/lot/{lot_id}/delete:
+    post:
+      summary: Delete parking lot
+      description: Delete a parking lot and all its spots (if no occupied spots)
+      tags:
+        - Admin Operations
+      parameters:
+        - name: lot_id
+          in: path
+          required: true
+          description: Parking lot ID to delete
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Parking lot deleted successfully
+        '400':
+          description: Cannot delete - spots are occupied
+        '403':
+          description: Access denied - admin only
+
+  /admin/lot/{lot_id}/freeze:
+    post:
+      summary: Freeze/unfreeze parking lot
+      description: Toggle parking lot status between active and frozen
+      tags:
+        - Admin Operations
+      parameters:
+        - name: lot_id
+          in: path
+          required: true
+          description: Parking lot ID
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Status updated successfully
+        '403':
+          description: Access denied - admin only
+
+  /admin/lot/{lot_id}/edit_spots:
+    post:
+      summary: Edit parking spots
+      description: Modify the number of spots in a parking lot
+      tags:
+        - Admin Operations
+      parameters:
+        - name: lot_id
+          in: path
+          required: true
+          description: Parking lot ID
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - max_spots
+              properties:
+                max_spots:
+                  type: integer
+                  description: New maximum number of spots
+                  example: 60
+      responses:
+        '200':
+          description: Spots updated successfully
+        '400':
+          description: Invalid number of spots
+        '403':
+          description: Access denied - admin only
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: session
+
+security:
+  - sessionAuth: []
+
+tags:
+  - name: Authentication
+    description: User authentication and session management
+  - name: User Operations
+    description: User-facing operations for parking management
+  - name: Admin Operations
+    description: Administrative operations for system management 

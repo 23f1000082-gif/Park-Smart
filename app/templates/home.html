@@ -1,0 +1,235 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vehicle Parking App</title>
+</head>
+<body>
+     <h1> Vehicle Parking App</h1>
+    <p>This is my Flask </p>
+</body>
+</html> -->
+<!-- Add more to the home page -> Header Section with  -->
+
+{% extends "base.html" %} {% block title %}Home - Parking App{% endblock %} {%
+block content %}
+<style>
+  body,
+  html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
+  .hero-section {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    background: url("{{ url_for('static', filename='images/two.jpg') }}")
+      no-repeat center center;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Move content to left */
+    color: white;
+    text-align: left;
+    overflow: hidden;
+    background-size: cover;
+    margin-top: 0;
+    padding-top: 0;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1;
+  }
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 4rem 3rem 4rem 3rem; /* More padding */
+    margin-left: 3vw;
+    max-width: 650px; /* Wider box */
+    background: transparent;
+    border-radius: 18px;
+    color: #fff;
+  }
+  .hero-content h1.display-3 {
+    font-size: 4.5rem;
+    font-weight: 800;
+    line-height: 1.1;
+    opacity: 0;
+    transform: translateY(40px);
+    animation: heroTextFadeUp 1s cubic-bezier(0.4, 2, 0.3, 1) 0.2s forwards;
+  }
+  .hero-content p.lead {
+    font-size: 1.7rem;
+    margin-bottom: 2.2rem;
+    opacity: 0;
+    transform: translateY(40px);
+    animation: heroTextFadeUp 1s cubic-bezier(0.4, 2, 0.3, 1) 0.5s forwards;
+  }
+  .hero-content h1,
+  .hero-content p {
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+  .btn-primary {
+    font-size: 1.35rem; /* Bigger button */
+    padding: 0.85rem 2.5rem;
+    background: rgb(255, 105, 41);
+    color: rgb(10, 10, 10);
+    border: none;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  .btn-primary:hover {
+    background-color: #ff9800;
+    color: #fff;
+  }
+  .hero-content form .btn-primary {
+    font-size: 1.35rem;
+    padding: 0.85rem 2.5rem;
+    opacity: 0;
+    transform: translateY(40px);
+    animation: heroTextFadeUp 1s cubic-bezier(0.4, 2, 0.3, 1) 0.8s forwards;
+  }
+  @keyframes heroTextFadeUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+
+<div class="hero-section mb-20">
+  <div class="hero-content">
+    <h1 class="display-3 fw-bold mb-3">Parking Made Simple</h1>
+    <p class="lead mb-4">
+      Find the perfect parking spot near your destination. Book in advance and
+      save time.
+    </p>
+    <form action="/user/search" method="GET" class="d-flex">
+      <button class="btn btn-primary px-4" type="submit">Book your Spot</button>
+    </form>
+  </div>
+</div>
+
+<section
+  id="about"
+  class="py-5"
+  style="background: #181818; color: #f8f9fa; margin-top: 90px"
+>
+  <div class="container">
+    <div class="text-center mb-5 pt-4">
+      <h1 class="fw-bold display-4 mb-2" style="color: #ffd600">
+        About ParkSmart
+      </h1>
+      <p class="lead mb-4" style="color: #e0e0e0">
+        Smart. Simple. Seamless Parking.
+      </p>
+    </div>
+    <div class="row justify-content-center mb-5">
+      <div class="col-lg-10">
+        <div
+          class="row g-0 bg-dark rounded-4 shadow-lg align-items-center p-4 p-md-5"
+        >
+          <div class="col-md-7 px-3 px-md-4 mb-4 mb-md-0">
+            <h2 class="fw-bold text-white mb-3">Our Story</h2>
+            <p class="fs-5 mb-3" style="color: #f3f3f3">
+              <span class="fw-bold">ParkSmart</span> is your smart companion in
+              tackling the challenges of city parking. Our real-time platform
+              helps you quickly locate and reserve nearby parking spots—saving
+              you valuable time, fuel, and effort.
+            </p>
+            <p class="fs-6" style="color: #cfcfcf">
+              We’re driven by a goal to make daily travel easier by offering
+              hassle-free parking options for drivers and increased visibility
+              for parking space owners. Whether you're commuting every day or
+              heading out occasionally, ParkSmart makes sure your parking
+              journey is smooth, dependable, and stress-free.
+            </p>
+          </div>
+          <div class="col-md-5 d-flex justify-content-center">
+            <img
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHnvr-tC9MQrBoGoNxKe8PiyWiPBG710K9sQEnmHR-6ZBgzh1nhXxSto3fQKx0u6usmzBs-Yqnhdbtv2GGGheh4h9qGlO1mUCxBRnpxe4cuH2vasvB7LvSn20dpv90cNQ_2O5QWvwvDoYUkGayxxMVH85W3WGK3Ohex4gPtkTfUIgke13lHYiMxnU2lh4Mj1RtYR8vnOqobwPezMJT4GVf5BT9Tm3o8WhN1iuS0GEzy37dd4sP8p7_CIf9U-s_6F78cIbS8PaU_uGb"
+              alt="City parking illustration"
+              class="img-fluid rounded-3 shadow"
+              style="background: #223; max-width: 320px"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="text-center mb-4">
+      <h3 class="fw-bold text-white mb-4">Our Core Values</h3>
+      <div class="row justify-content-center g-4">
+        <div class="col-12 col-md-4">
+          <div class="d-flex flex-column align-items-center">
+            <div
+              class="bg-warning rounded-circle d-flex align-items-center justify-content-center mb-3"
+              style="width: 64px; height: 64px"
+            >
+              <i class="bi bi-lightbulb-fill text-dark fs-2"></i>
+            </div>
+            <h5 class="fw-semibold text-white">Innovation</h5>
+            <p class="text-secondary mb-0">
+              Constantly evolving to provide the smartest parking solutions.
+            </p>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="d-flex flex-column align-items-center">
+            <div
+              class="bg-warning rounded-circle d-flex align-items-center justify-content-center mb-3"
+              style="width: 64px; height: 64px"
+            >
+              <i class="bi bi-hand-thumbs-up-fill text-dark fs-2"></i>
+            </div>
+            <h5 class="fw-semibold text-white">Reliability</h5>
+            <p class="text-secondary mb-0">
+              You can count on us for a dependable parking experience every
+              time.
+            </p>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="d-flex flex-column align-items-center">
+            <div
+              class="bg-warning rounded-circle d-flex align-items-center justify-content-center mb-3"
+              style="width: 64px; height: 64px"
+            >
+              <i class="bi bi-people-fill text-dark fs-2"></i>
+            </div>
+            <h5 class="fw-semibold text-white">Community</h5>
+            <p class="text-secondary mb-0">
+              Connecting drivers and space owners to build a smarter city.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="text-center mt-5 pt-4 border-top border-secondary">
+      <p class="text-secondary">
+        Need help? Contact us at
+        <a
+          class="text-warning text-decoration-none"
+          href="mailto:support@parksmart.com"
+          >support@parksmart.com</a
+        >
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer
+  class="text-center py-3"
+  style="background: #181818; color: #bbb; font-size: 1rem"
+>
+  &copy; 2025 All rights reserved. ParkSmart.
+</footer>
+
+{% endblock %}
